@@ -42,9 +42,9 @@ def buy(info, money, wallet):
 
     for index in range(0, len(prices) - 1):
         if is_in_wallet(names[index], wallet):
-            wallet[str(names[index])] = float(prices[index])
-        else:
             wallet[str(names[index])] = float(wallet.get(str(names[index]))) + float(prices[index])
+        else:
+            wallet[str(names[index])] = float(prices[index])
         money -= float(prices[index])
 
     return {'wallet':wallet, 'money':money}
@@ -70,8 +70,10 @@ with open('data.txt', 'rb') as f:
 
 # sold is True if last movement was to sell, 0 otherwise
 sold = data['sold']
-total_money = data['total_money']
-my_wallet = data['my_wallet']
+total_money = data['money']
+my_wallet = data['wallet']
+
+data['sold'] = not data['sold']
 
 url = 'https://coinmarketcap.com/gainers-losers/'
 response = requests.get(url)
@@ -92,8 +94,6 @@ if sold:
     data = buy(info_day, total_money, my_wallet)
 else:
     data = sell(info_day, total_money, my_wallet)
-
-data['sold'] = not data['sold']
 
 with open('data.txt', 'wb') as f:
     pickle.dump(data, f)
