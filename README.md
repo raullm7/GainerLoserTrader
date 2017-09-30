@@ -12,10 +12,20 @@ To run the project you will need to create a new 'data.txt' with an empty dictio
   
       `import pickle`
       
-      `data = {'sold':True, 'wallet':{}, 'money':0}`
+      `data = {'sold':True, 'wallet':{}, 'money':100}`
       
       `with open('data.txt', 'wb') as f:
           pickle.dump(data, f)`
   3. Run the program whenever you want!
+
+  OR you can just run `python start.py` ...
+
+To check your 'wallet' balance just run `python check.py`
   
 I run it at specefic hours from a Mac, for that scheduling of scripts I use crontab.
+
+# Troubleshooting
+
+`ValueError: unsupported pickle protocol: 3` This basically means that you are running Python 2 instead of Python 3.
+They pickle library will fail to load the data since the protocols changed from Python 3 to Python 2.
+Just run it with Python 3 and you should not see it again ;).
