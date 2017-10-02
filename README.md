@@ -12,7 +12,7 @@ To run the project you will need to create a new 'data.txt' with an empty dictio
   
       `import pickle`
       
-      `data = {'sold':True, 'wallet':{}, 'money':100}`
+      `data = {'wallet':{}, 'money':1000}`
       
       `with open('data.txt', 'wb') as f:
           pickle.dump(data, f)`
@@ -23,6 +23,10 @@ To run the project you will need to create a new 'data.txt' with an empty dictio
 To check your 'wallet' balance just run `python check.py`
   
 I run it at specefic hours from a Mac, for that scheduling of scripts I use crontab.
+
+To run it you can just install crontab: `pip3 install python-crontab` and then `python run.py`
+Its very easy to modify, leave a good beginners manual here: `https://code.tutsplus.com/tutorials/managing-cron-jobs-using-python--cms-28231`
+
 
 # Troubleshooting
 

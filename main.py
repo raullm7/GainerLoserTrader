@@ -2,6 +2,26 @@ import requests
 import pickle
 from bs4 import BeautifulSoup
 from bs4 import Tag
+import sys
+from time import sleep
+
+
+def get_json(url):
+    counter = 0
+    try:
+        sell_response = requests.get(url)
+        data = sell_response.json()
+        return data
+    except:
+        # If I have tried to connect less than 10 times
+        if counter < 10:
+            print(url + ' is not responding.')
+            print('Sleeping 60s and trying again...')
+            sleep(60)
+            get_json(url)
+        else:
+            print('TIMEOUT ERROR!')
+            exit()
 
 
 def get_info(div):
@@ -25,24 +45,14 @@ def is_in_wallet(currency, wallet):
     return not isinstance(wallet.get(str(currency)), type(None))
 
 
-def sell_outside(name, value, money):
-    sell_url = 'https://min-api.cryptocompare.com/data/price?fsym=' + str(name) + '&tsyms=USD'
-    sell_response = requests.get(sell_url)
-    data = sell_response.json()
-    try:
-        money += int(data['USD'])
-    except ValueError:
-        money -= value
-    return money
-
-
 def buy(info, money, wallet):
     prices = info['prices']
     names = info['names']
 
     for index in range(0, len(prices) - 1):
         if is_in_wallet(names[index], wallet):
-            wallet[str(names[index])] = float(wallet.get(str(names[index]))) + float(prices[index])
+            wallet[str(names[index])] = float(wallet.get(str(names[index])))\
+                                        + float(prices[index])
         else:
             wallet[str(names[index])] = float(prices[index])
         money -= float(prices[index])
@@ -50,50 +60,72 @@ def buy(info, money, wallet):
     return {'wallet':wallet, 'money':money}
 
 
-def sell(info, money, wallet):
-    prices = info['prices']
-    names = info['names']
+def sell(money, wallet):
+    for key, value in wallet.items():
+        sell_url = 'https://min-api.cryptocompare.com/data/price?fsym=' \
+                   + str(key) + '&tsyms=USD'
+        data = get_json(sell_url)
+        try:
+            money += float(data['USD'])
+        except (ValueError, KeyError):
+            money += value
 
-    for name, value in wallet:
-        if name in names:
-            money += prices[names.index(name)]
-        else:
-            money = sell_outside(name, value, money)
+        del wallet[str(key)]
+    return {'wallet': wallet, 'money': money}
 
-        wallet[name] = 0
+# Main takes arg 'every_h' which is true (1) if main is executed
+# at a multiple of the original hour (controlled by run.py),
+# false (0) otherwise
+# By default every_h takes value 1 (True)
+try:
+    every_h = float(sys.argv[1])
+except (ValueError, IndexError) as e:
+    if type(e) is ValueError:
+        print('ERROR: ' + str(e))
+    every_h = 1
 
-        return {'wallet': wallet, 'money': money}
+if every_h:
+    file = 'data_1h.txt'
+else:
+    file = 'data_24h.txt'
 
-
-with open('data.txt', 'rb') as f:
+with open(file, 'rb') as f:
     data = pickle.load(f)
 
-# sold is True if last movement was to sell, 0 otherwise
-sold = data['sold']
 total_money = data['money']
 my_wallet = data['wallet']
 
-data['sold'] = not data['sold']
+original_money = data['money']
 
 url = 'https://coinmarketcap.com/gainers-losers/'
-response = requests.get(url)
+
+# If the computer has no internet connection or API fails, exit
+try:
+    response = requests.get(url)
+except:
+    print('ERROR: No internet connection')
+    exit()
+
 html = response.content
 
 soup = BeautifulSoup(html, 'html.parser')
 
-div_hour = soup.find("div", { "id" : "gainers-1h" })
-info_hour = get_info(div_hour)
-
-div_day = soup.find("div", { "id" : "gainers-24h" })
-info_day = get_info(div_day)
-
-div_week = soup.find("div", { "id" : "gainers-7d" })
-info_week = get_info(div_week)
-
-if sold:
-    data = buy(info_day, total_money, my_wallet)
+if every_h:
+    div = soup.find("div", { "id" : "gainers-1h" })
 else:
-    data = sell(info_day, total_money, my_wallet)
+    div = soup.find("div", { "id" : "gainers-24h" })
+# Weekly not needed yet
+# div = soup.find("div", { "id" : "gainers-7d" })
 
-with open('data.txt', 'wb') as f:
+info = get_info(div)
+
+# The first time I only buy
+if not my_wallet:
+    data = buy(info, total_money, my_wallet)
+else:
+    # Then I sell and buy again with updated cryptocurrencies
+    data = sell(total_money, my_wallet)
+    data = buy(info, total_money, my_wallet)
+
+with open(file, 'wb') as f:
     pickle.dump(data, f)
