@@ -24,8 +24,13 @@ To check your 'wallet' balance just run `python check.py`
   
 I run it at specefic hours from a Mac, for that scheduling of scripts I use crontab.
 
-To run it you can just install crontab: `pip3 install python-crontab` and then `python run.py`
-Its very easy to modify, leave a good beginners manual here: `https://code.tutsplus.com/tutorials/managing-cron-jobs-using-python--cms-28231`
+To run it you can just run the script I made: `./cron_starter.sh`
+IMPORTANT: You will have to modify the absolute paths in this file as well as they PATH variable.
+To know your path variable simply go to the directory where you run the script and run `echo $PATH`
+
+If you are new with `Crontab` here there is a good cheat sheet: `https://www.codementor.io/akul08/the-ultimate-crontab-cheatsheet-5op0f7o4r`
+
+ENJOY!
 
 
 # Troubleshooting
